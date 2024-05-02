@@ -1,2 +1,2 @@
 # PEGraph Generator
-WIP: PEGraph Generator is part of thwe SkyCluster project.
+WIP: PEGraph Generator is part of the SkyCluster project.

@@ -152,10 +152,9 @@ func processNode(g *Graph, appGraph *Graph, node *Node, locationAllowlist map[st
 	var addedNodes []*Node
 	if connections, ok := appGraph.Edges[node.Name]; ok {
 		addedNodes = processConnections(g, appGraph, node, connections, locationAllowlist)
-	} else {
-		fmt.Println(" No edge, check any sources")
-		checkSources(g, appGraph, node)
 	}
+	fmt.Println("  Check nodes that may be a source to this...")
+	checkSources(g, appGraph, node, locationAllowlist)
 	return addedNodes
 }
 
@@ -191,15 +190,27 @@ func processExistingNode(g *Graph, node *Node, connectedNodeIdxs []int) {
 	}
 }
 
-func checkSources(g *Graph, appGraph *Graph, node *Node) {
+func checkSources(g *Graph, appGraph *Graph, node *Node, locationAllowlist map[string][]*Location) {
 	for srcNodeName, destinations := range appGraph.Edges {
 		for _, destNodeName := range destinations {
 			if destNodeName == node.Name {
-				fmt.Println(" [Found] an existing edge")
+				fmt.Println("  [Found] an existing edge")
+				// if the source node is already in the graph, add an edge
+				sourceNodeIsInGraph := false
 				for _, srcNode := range g.Nodes {
 					if srcNode.Name == srcNodeName {
+						fmt.Println("  [Found] source node in the graph, adding an edge")
+						sourceNodeIsInGraph = true
 						g.Edges[srcNode.ID] = append(g.Edges[srcNode.ID], node.ID)
 					}
+				}
+				if !sourceNodeIsInGraph {
+					fmt.Println("  [Not Found] creating a new instance and add edge")
+					newNode := createInstance(
+						srcNodeName, locationAllowlist[srcNodeName][rand.Intn(len(locationAllowlist[srcNodeName]))])
+					g.Nodes = append(g.Nodes, newNode)
+					g.Edges[newNode.ID] = append(g.Edges[newNode.ID], node.ID)
+					_ = processNode(g, appGraph, newNode, locationAllowlist)
 				}
 			}
 		}
